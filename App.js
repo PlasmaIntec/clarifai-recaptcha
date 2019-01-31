@@ -10,8 +10,19 @@ app.models.predict(Clarifai.GENERAL_MODEL, 'https://samples.clarifai.com/metro-n
     console.log(response);
   })
   .catch(err => {
-    console.log(err);
+    console.error(err);
   });
+
+var predictBase64 = (b) => {
+	app.models.predict(Clarifai.GENERAL_MODEL, {base64: b})
+		.then(response => {
+	    var concepts = response['outputs'][0]['data']['concepts'];
+			console.log(concepts);
+		})
+		.catch(err => {
+			console.error(err);
+		});
+}	
 
 $file = $('<input>').attr('type', 'file');
 $file.text('pick file');
@@ -29,4 +40,24 @@ $file.on('change', (event) => {
 	}
 
 	reader.readAsDataURL(file);
+
+	getBase64(file)
+		.then(b => {
+			predictBase64(b);
+		});
 });
+
+var getBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      let encoded = reader.result.replace(/^data:(.*;base64,)?/, '');
+      if ((encoded.length % 4) > 0) {
+        encoded += '='.repeat(4 - (encoded.length % 4));
+      }
+      resolve(encoded);
+    };
+    reader.onerror = error => reject(error);
+  });
+};
